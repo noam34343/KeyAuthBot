@@ -34,6 +34,10 @@ def menu():
 		os._exit(0)
 	elif choice == '3':
 		os._exit(0)
+	else:
+		print("Not A vaild Option..\n")
+		time.sleep(2)
+		menu()
 		
 menu()
 		
