@@ -234,4 +234,4 @@ async def unlock(ctx):
 
 
 
-bot.run('MTA0MzE2NjY1ODA1Njk2NjE5NQ.GTrWt7.fQuoJ3Mlixxt9F32Uoc-jQElnImBLyNU7J-6mY')
+bot.run(token)
