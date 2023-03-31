@@ -9,5 +9,6 @@
 - python (install Python in your pc)
 - code editor (you can use vscode)
 
-
+# key gen & redeem showcase
+<img src="image.png" alt="keygen&redeemshowcase">
 
