@@ -7,9 +7,9 @@ import time
 import random
 import string
 token = "Bot Token" # bot token
-prefix = "Bot Prefix" # bot prefix 
+prefix = "Prefix" # bot prefix 
 activity = "Bot Activity" # bot activity, Playing {game}
-sellerkey = "KeyAuth sellerkey" # sellerkey 
+sellerkey = "KeyAuth Sellerkey" # sellerkey 
 auth_role = "auth role" # only people with the role can use auth commands
 
 
@@ -167,7 +167,9 @@ async def resetuser(ctx, user):
 
 @bot.command()
 @commands.has_role(auth_role)
-async def activate(ctx, username, password, license):
+async def activate(ctx, license):
+	password = ''.join(random.choice(string.ascii_letters+string.digits) for i in range(10))
+	username = ''.join(random.choice(string.ascii_letters+string.digits) for i in range(10))
 	req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=activate&user={username}&key={license}&pass={password}format=text")
 	if req.json()["success"]:
 		embed = discord.Embed(title="**License Successfully Activated**", description=f"License Activiated\nUsername: {username}\nPassword: {password}\nlicense key: {license}", color=0x2ecc71)
@@ -182,10 +184,11 @@ async def activate(ctx, username, password, license):
 @bot.command()
 @commands.has_role(auth_role)
 async def genkey(ctx, day: int):
-	key = "".join(random.choice(string.ascii_letters+string.digits) for i in range(25))
-	req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=add&expiry={day}&mask={key}&level=1&amount=1&format=json")
-	key = req.json()["key"]
-	await ctx.send(f"{ctx.author.mention}, Successfully generated license key! License: {key}")
+	license = ''.join(random.choice(string.ascii_letters+string.digits) for i in range(40))
+	req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=add&format=json&expiry={day}&mask={license}&level=3&amount=1&owner=SellerAPI")
+	if req.json()["success"]:
+		key = req.json()["key"]
+		await ctx.send(f"Successfully generated License key ```{key}```")
 	
     
 # general commands
