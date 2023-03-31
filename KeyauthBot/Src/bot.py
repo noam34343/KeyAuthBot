@@ -59,6 +59,23 @@ async def on_ready():
 
 # auth commands
 
+@bot.command()
+@commands.has_role(auth_role)
+async def banuser(ctx, user, reason):
+    req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=banuser&user={user}&reason={reason}")
+    if req.json()["success"]:
+        await ctx.send(f" {ctx.author.mention},b Successfully banned {user} from KeyAuth\nYou can see the user is banned here: https://keyauth.cc/app/?page=users")
+    else:
+        await ctx.send(f"{ctx.author.mention}, Failed to ban this account!")
+	
+@bot.command()
+async def unbanuser(ctx, user):
+    req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=unbanuser&user={user}")
+    if req.json()["success"]:
+        await ctx.send(f"{ctx.author.mention}, Successfully unbanned account!\nyou can see the unbanned account here: https://keyauth.cc/app/?page=users")
+    else:
+        await ctx.send(f"{ctx.author.mention}, Failed unban this account")
+
 
 @bot.command()
 @commands.has_role(auth_role)
