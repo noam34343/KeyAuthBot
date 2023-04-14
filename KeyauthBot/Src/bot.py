@@ -1,261 +1,241 @@
 import discord
 from discord.ext import commands
-import requests
-import datetime
 import os
 import time
+import requests
 import random
 import string
-token = "Bot Token" # bot token
-prefix = "Prefix" # bot prefix 
-activity = "Bot Activity" # bot activity, Playing {game}
-sellerkey = "KeyAuth Sellerkey" # sellerkey 
-auth_role = "auth role" # only people with the role can use auth commands
 
+sellerkey = "keyauth sellerkey"
+token = "bot token"
 
+icon_url = "icon url"
+embed_footer_text = "embed text footer "
 
-bot = commands.Bot(command_prefix=prefix, intents=discord.Intents.all())
-def menu():
-	print("----------------------------------------")
-	print("Welcome to $name KeyAuth Bot")
-	print("----------------------------------------")
-	
-
-	print('[1] Run Bot')
-	print('[2] Github ')
-	print('[3] Exit')
-	choice = input("> ")
-	if choice == '1':
-		print("Loading Bot....")
-		time.sleep(2)
-	elif choice == '2':
-		os.system("start https://github.com/noam34343")
-		os.system("pause")
-		os._exit(0)
-	elif choice == '3':
-		os._exit(0)
-	else:
-		print("Not A vaild Option..\n")
-		time.sleep(2)
-		menu()
-		
-menu()
-		
-		
-
-
-@bot.event
-async def on_ready():
-    await bot.change_presence(status=discord.Status.online, activity=discord.Game(activity))
-    print("Successfully loaded KeyAuth bot")
-    print(f"{prefix}help for commands")
-    print(f"Logged in as: {bot.user}")
-    print(f"Bot id: {bot.user.id}")
-
-
-
-
-    
+keyauth = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+keyauth.remove_command("help")
 
 # auth commands
+@keyauth.event 
+async def on_command_error(error, ctx):
+    if isinstance(error, commands.CommandNotFound):
+        embed = discord.Embed(title=f"**Command Not found**", description=f"*{ctx.author.mention}*, Sorry! this command doesnt exist")
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
 
-@bot.command()
-@commands.has_role(auth_role)
-async def banuser(ctx, user, reason):
-    req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=banuser&user={user}&reason={reason}")
+@keyauth.event
+async def on_command_error(error, ctx):
+    if isinstance(error, commands.MissingRequiredArgument):
+        embed = discord.Embed(title=f"**Missing Required Arguments**", description=f"*{ctx.author.mention}*, Sorry! You are missing required arguments.", color=0x3498db)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
+
+
+@keyauth.command()
+async def authstatus(ctx):
+    req = requests.get(f"https://keyauth.win/")
+    embed = discord.Embed(title="**KeyAuth authentication Status**", description=f"*KeyAuth authentication website status*: **{req.status_code}**", color=0x3498db)
+    embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+    await ctx.send(embed=embed)
+
+
+@keyauth.command()
+async def ping(ctx):
+    embed = discord.Embed(title="**pong!**", description=f"{round(keyauth.latency * 1000)} ms", color=0x3498db)
+    embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+    await ctx.send(embed=embed)
+
+
+
+
+
+
+@keyauth.command()
+async def deletelicense(ctx, key):
+    req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=del&key={key}")
     if req.json()["success"]:
-        await ctx.send(f" {ctx.author.mention},b Successfully banned {user} from KeyAuth\nYou can see the user is banned here: https://keyauth.cc/app/?page=users")
+        embed = discord.Embed(title="Deleted License", description=f"{ctx.author.mention} You Successfully deleted license key, License key: {key}", color=0x3498db)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
     else:
-        await ctx.send(f"{ctx.author.mention}, Failed to ban this account!")
-	
-@bot.command()
-async def unbanuser(ctx, user):
-    req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=unbanuser&user={user}")
+        embed = discord.Embed(title="Failed to delete License", description=f"{ctx.author.mention}, Failed to Delete license key, License key: {key}", color=0xe74c3c)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
+
+
+@keyauth.command()
+async def banlicense(ctx, key, reason):
+    req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=ban&key={key}&reason={reason}")
     if req.json()["success"]:
-        await ctx.send(f"{ctx.author.mention}, Successfully unbanned account!\nyou can see the unbanned account here: https://keyauth.cc/app/?page=users")
+        embed = discord.Embed(title="Banned license", description=f"{ctx.author.mention} You Successfully Banned license key, License key: {key}", color=0x3498db)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
     else:
-        await ctx.send(f"{ctx.author.mention}, Failed unban this account")
-
-
-@bot.command()
-@commands.has_role(auth_role)
-async def deluser(ctx, user):
-	req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=deluser&user={user}")
-	if req.json()["success"]:
-		await ctx.send(f"{ctx.author.mention}, You successfully deleted user {user} From KeyAuth")
-	else:
-		await ctx.send(f"{ctx.author.mention}, Failed to delete This user!")
-		
-
-@bot.command()
-@commands.has_role(auth_role)
-async def hwidreset(ctx, user):
-	req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=resetuser&user={user}")
-	if req.json()["success"]:
-		await ctx.send(f"{ctx.author.mention}, Successfully resetted {user}")
-	else:
-		await ctx.send(f"{ctx.author.mention}, Failed to hwid reset this user!")
-		
-
-
-@bot.event
-async def on_command_error(ctx, error):
-	if isinstance(error, commands.MissingRequiredArgument):
-		embed = discord.Embed(title="**Missing Arguments**", description=f"*{ctx.author.mention}, Sorry! you missing Arguments please check the command and try again*", color=0xe74c3c)
-		embed.set_footer(icon_url="https://cdn.discordapp.com/attachments/969552068153061466/1090270831495610398/d7d3c693b9568f320a7505c75407cce4.png", text="Keyauth Bot")
-		await ctx.send(embed=embed)
-
-
-@bot.event
-async def on_command_error(ctx, error):
-	if isinstance(error, commands.CommandNotFound):
-		embed = discord.Embed(title="**command not found**", description=f"Sorry! {ctx.author.mention}, This command Doesnt exist!", color=0xe74c3c)
-		embed.set_footer(icon_url="https://cdn.discordapp.com/attachments/969552068153061466/1090270831495610398/d7d3c693b9568f320a7505c75407cce4.png", text="Keyauth Bot")
-		await ctx.send(embed=embed)
-
-	    
-		
-
-
-@bot.command()
-@commands.has_role(auth_role)
-async def delkey(ctx, key):
-	req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=del&key={key}")
-	if req.json()["success"]:
-		await ctx.send(f"{ctx.author.mention}, Successfully deleted key {key}")
-	else:
-		await ctx.send(f"{ctx.author.mention}, Failed to delete this user")
-		
+        embed = discord.Embed(title="Failed to Ban License", description=f"{ctx.author.mention}, Failed to Ban license key, License key: {key}", color=0xe74c3c)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
 
 
 
-@bot.command()
-@commands.has_role(auth_role)
-async def unbankey(ctx, key):
-	req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=unban&key={key}")
-	if req.json()["success"]:
-		await ctx.send(f"{ctx.author.mention}, Successfully Unbanned key {key}")
-	else:
-		await ctx.send(f"{ctx.author.mention}, Failed to unban this key!")
-		
-
-@bot.command()
-@commands.has_role(auth_role)
-async def bankey(ctx, key, reason):
-	req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=ban&key={key}&reason={reason}")
-	if req.json()["success"]:
-		await ctx.send(f"{ctx.author.mention}, Successfully banned license key {key} for reason: {reason}")
-	else:
-		await ctx.send(f"{ctx.author.mention}, Failed to ban this license key!")	
-		
-
-@bot.command()
-async def addhwid(ctx, username, hwid):
-	req = requests.get(f"https://keyauth.win/api/seller/?sellerkey=${sellerkey}&type=addhwiduser&user={username}&hwid={hwid}")
-	if req.json()["success"]:
-		await ctx.send(f"{ctx.author.mention}, Successfully added {hwid} Hwid to user {username}")
-	else:
-		await ctx.send(f"{ctx.author.mention}, Failed to add HWID to this user")
+@keyauth.command()
+async def unbanlicense(ctx, key):
+    req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=unban&key={key}")
+    if req.json()["success"]:
+        embed = discord.Embed(title="Unbanned license", description=f"{ctx.author.mention} You Successfully Unbanned license key, License key: {key}", color=0x3498db)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
+    else:
+        embed = discord.Embed(title="Failed to Unban License", description=f"{ctx.author.mention}, Failed to Unban license key, License key: {key}", color=0xe74c3c)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
 
 
-@bot.command()
-@commands.has_role(auth_role)
-async def verifyuser(ctx, user):
-	req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=verifyuser&user={user}")
-	if req.json()["success"]:
-		embed = discord.Embed(title="**Verified user**", description=f"UserName: {user}\nUser Exist: True", color=0x2ecc71)
-		embed.set_footer(icon_url="https://cdn.discordapp.com/attachments/969552068153061466/1090270831495610398/d7d3c693b9568f320a7505c75407cce4.png", text="Keyauth Bot")
-		await ctx.send(embed=embed)
-	else:
-		embed = discord.Embed(title="**Verified user**", description=f"UserName: {user}\nUser Exist: False", color=0xe74c3c)
-		embed.set_footer(icon_url="https://cdn.discordapp.com/attachments/969552068153061466/1090270831495610398/d7d3c693b9568f320a7505c75407cce4.png", text="Keyauth Bot")
-		await ctx.send(embed=embed)
-		
+@keyauth.command()
+async def retrievelicense(ctx, user):
+    req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=getkey&user={user}")
+    req.json()
+    embed = discord.Embed(title="Retrieved license", description=f"{ctx.author.mention} You Successfully Retrieved license key, Check your dms!", color=0x3498db)
+    embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+    await ctx.send(embed=embed)
+    await ctx.author.send(req.json())
 
-@bot.command()
-@commands.has_role(auth_role)
-async def resetuser(ctx, user):
-	req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=resetuser&user={user}")
-	if req.json()["success"]:
-		await ctx.send(f"{ctx.author.mention}, Successfully resetted user {user}")
-	else:
-		await ctx.send(f"{ctx.author.mention}, Failed to reset this user")
-		
 
-@bot.command()
-@commands.has_role(auth_role)
-async def activate(ctx, license):
-	password = ''.join(random.choice(string.ascii_letters+string.digits) for i in range(10))
-	username = ''.join(random.choice(string.ascii_letters+string.digits) for i in range(10))
-	req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=activate&user={username}&key={license}&pass={password}format=text")
-	if req.json()["success"]:
-		embed = discord.Embed(title="**License Successfully Activated**", description=f"License Activiated\nUsername: {username}\nPassword: {password}\nlicense key: {license}", color=0x2ecc71)
-		embed.set_footer(icon_url="https://cdn.discordapp.com/attachments/969552068153061466/1090270831495610398/d7d3c693b9568f320a7505c75407cce4.png", text="Keyauth Bot")
-		await ctx.send(embed=embed)
-	else:
-		embed = discord.Embed(title="**Failed to Activate Key!**", description=f"{ctx.author.mention}, Failed to Activate this license key!, please try again later", color=0xe74c3c)
-		embed.set_footer(icon_url="https://cdn.discordapp.com/attachments/969552068153061466/1090270831495610398/d7d3c693b9568f320a7505c75407cce4.png", text="Keyauth Bot")
-		await ctx.send(embed=embed)
-		
+@keyauth.command()
+async def verifylicense(ctx, key):
+    req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=verify&key={key}")
+    if req.json()["success"]:
+        embed = discord.Embed(title="Verified License key", description=f":white_check_mark: License Exist: True\nLicense key: {key}", color=0x3498db)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
+    else:
+        embed = discord.Embed(title="Verified License key", description=f":anger: License Exist: False\nLicense key: {key}", color=0xe74c3c)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
 
-@bot.command()
-@commands.has_role(auth_role)
+
+@keyauth.command()
 async def genkey(ctx, day: int):
 	license = ''.join(random.choice(string.ascii_letters+string.digits) for i in range(40))
 	req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=add&format=json&expiry={day}&mask={license}&level=3&amount=1&owner=SellerAPI")
 	if req.json()["success"]:
 		key = req.json()["key"]
-		await ctx.send(f"Successfully generated License key ```{key}```")
-	
-    
-# general commands
-@commands.has_permissions(ban_members = True)
-@bot.command()
-async def ban(ctx, user: discord.Member, *, reason):
-	if reason == None:
-		await ctx.send(f"{ctx.author.mention}, Please Provide a reason to ban members.")
-	elif user == None:
-		await ctx.send(f"{ctx.author.mention}, Please provide a user to ban.")
-	else:
-		await user.ban(reason=reason)
-		await ctx.send(f"{ctx.author.mention},You Successfully banned user: {user}\nuser id: {user.id}")
-		
+		await ctx.send(f"Successfully generated License key!\nLicense key: ```{key}```")
+        
 
-@commands.has_permissions(kick_members = True)
-@bot.command()
-async def kick(ctx, user: discord.Member, *, reason):
-	if reason == None:
-		await ctx.send(f"{ctx.author.mention}, Please Provide a reason to kick members.")
-	elif user == None:
-		await ctx.send(f"{ctx.author.mention}, Please provide a user to kick.")
-	else:
-		await user.kick(reason=reason)
-		await ctx.send(f"{ctx.author.mention},You Successfully kicked user: {user}\nuser id: {user.id}")
-		
 
-@commands.has_permissions(kick_members = True)
-@bot.command()
+
+@keyauth.command()
+async def activate(ctx, license):
+    username = ctx.author
+    password = ''.join(random.choice(string.ascii_letters+string.digits) for i in range(10))
+    req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=activate&user={username}&key={license}&pass={password}format=text")
+    if req.json()["success"]:
+        embed = discord.Embed(title="*Successfully activated license key*", description=f"Details about the account", color=0x3498db)
+        embed.add_field(name="username\n: ", value=f"{username}")
+        embed.add_field(name="password\n: ", value=f"{password}")
+        embed.add_field(name="License key\n: ", value=f"{license}")
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(f"{ctx.author.mention}, Successfully activated license key! check your dms for mroe information")
+        await ctx.author.send(embed=embed)
+    else:
+        await ctx.send(f"{ctx.author.mention}, Failed to activate license key! check your dms for more information")
+        await ctx.author.send(req.json())
+
+
+
+
+@keyauth.command()
+async def resethwid(ctx, user):
+    req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=resetuser&user={user}")
+    if req.json()["success"]:
+        embed = discord.Embed(title="Resetted HWID", description=f":white_check_mark: Successfully resetted HWID for {user}", color=0x3498db)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
+    else:
+        embed = discord.Embed(title="Failed to reset HWID", description=f":anger: Failed to reset HWID for {user}", color=0xe74c3c)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
+
+
+@keyauth.command()
+async def banuser(ctx, user, reason):
+    req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=banuser&user={user}&reason={reason}")
+    if req.json()["success"]:
+        embed = discord.Embed(title="Banned user", description=f":white_check_mark: Successfully banned user {user} for {reason}", color=0x3498db)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
+    else:
+        embed = discord.Embed(title="Failed to ban user", description=f":anger: Failed to ban user {user}", color=0xe74c3c)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
+
+        
+@keyauth.command()
+async def unbanuser(ctx, user):
+    req = requests.get(f"https://keyauth.win/api/seller/?sellerkey={sellerkey}&type=unbanuser&user={user}")
+    if req.json()["success"]:
+        embed = discord.Embed(title="Unbanned User", description=f"{ctx.author.mention} You Successfully Unbanned User, Username: {user}", color=0x3498db)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
+    else:
+        embed = discord.Embed(title="Failed to Unban User", description=f"{ctx.author.mention}, Failed to Unban User , Username: {user}", color=0xe74c3c)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
+
+# moderator commands
+
+@keyauth.command()
+async def ban(ctx, user: discord.Member=None, reason=None):
+    if reason == None:
+        await ctx.send(f"{ctx.author.mention}, You must provide a reason before ban this user!")
+    elif user == None:
+        await ctx.send(f"{ctx.author.mention}, You must provide a user to ban before using this command")
+    else:
+        await user.ban()
+        embed = discord.Embed(title="Banned user", description=f"Successfully banned user: {user}\nreason: {reason}\nrequested by: {ctx.author.mention}", color=0x3498db)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
+
+
+@keyauth.command()
+async def kick(ctx, user: discord.Member=None, reason=None):
+    if reason == None:
+        await ctx.send(f"{ctx.author.mention}, You must provide a reason before kick this user!")
+    elif user == None:
+        await ctx.send(f"{ctx.author.mention}, You must provide a user to kick before using this command")
+    else:
+        await user.kick()
+        embed = discord.Embed(title="Kicked user", description=f"Successfully kicked user: {user}\nreason: {reason}\nrequested by: {ctx.author.mention}", color=0x3498db)
+        embed.set_footer(text=embed_footer_text, icon_url=icon_url)
+        await ctx.send(embed=embed)
+
+
+@keyauth.command()
+async def chnick(ctx, user: discord.Member, nick):
+    await user.edit(nick=nick)
+    await ctx.send(f"{ctx.author.mention}, Successfully changed nickname for {user}")
+
+
+@keyauth.command()
+async def slowmode(ctx, secs: int):
+    await ctx.channel.edit(slowmode_delay=secs)
+    await ctx.send(f"{ctx.author.mention}, Successfully setted slowmode for {ctx.channel.mention}")
+
+
+@keyauth.command()
 async def lock(ctx):
-	await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
-	await ctx.send(f"{ctx.author.mention}, Successfully locked channel {ctx.channel.mention}")
-	
+    await ctx.channel.edit_permissions(send_messages = False)
+    await ctx.send(f"{ctx.author.mention}, Successfully Locked channel {ctx.channel.mention}")
 
-@commands.has_permissions(kick_members = True)
-@bot.command()
+
+@keyauth.command()
 async def unlock(ctx):
-	await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
-	await ctx.send(f"{ctx.author.mention}, Successfully unlocked channel {ctx.channel.mention}")
-	
-
-
-    
-	  
-	    
-
-	
-
-	
+    await ctx.channel.edit_permissions(send_messages = True)
+    await ctx.send(f"{ctx.author.mention}, Successfully Locked channel {ctx.channel.mention}")
 
 
 
-bot.run(token)
+
+
+keyauth.run(token)
+
